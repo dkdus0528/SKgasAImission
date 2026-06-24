@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>명탐정그린 · AI 공급 미션을 수행하라</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:          #cceafa;
+  --surface:     #ffffff;
+  --surface2:    #ffffff;
+  --accent:      #00b4d8;
+  --accent2:     #f77f00;
+  --text:        #1a2c3e;
+  --text-muted:  #4a7a9b;
+  --locked-bg:   #b8d4e8;
+  --locked-col:  #6a9ab8;
+  --border:      #9ec5da;
+  --success:     #2ecc71;
+  --danger:      #e74c3c;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans KR', sans-serif;
+  min-height: 100vh;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 310px 1fr;
+  min-height: 100vh;
+}
+
+/* ── LEFT PANEL ─────────────────────────────────────────── */
+.left-panel {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.game-title {
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--accent);
+}
+.game-title .badge {
+  display: inline-block;
+  background: #cceafa;
+  color: #000;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 3px;
+  margin-bottom: 8px;
+}
+.game-title h1 {
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.45;
+  color: var(--text);
+}
+.game-title h1 em {
+  font-style: normal;
+  color: #fd7d96;
+}
+
+/* game setting */
+.setting-section {
+  padding-bottom: 4px;
+}
+.setting-heading {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.btn-new-game {
+  width: 100%;
+  background: #a7d297;
+  color: #2d5a1b;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .2s, transform .1s;
+  text-align: center;
+  letter-spacing: .3px;
+}
+.btn-new-game:hover  { background: #8fc280; }
+.btn-new-game:active { transform: scale(.97); }
+
+/* modal overlay */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-box {
+  background: #cceafa;
+  border: 1px solid #9ec5da;
+  border-radius: 14px;
+  padding: 32px 28px 24px;
+  width: 320px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  animation: fadeUp .2s ease;
+}
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(12px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.modal-title {
+  font-size: 18px;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 20px;
+  color: #2ab5ff;
+}
+.modal-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #2ab5ff;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.modal-select {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #9ec5da;
+  border-radius: 8px;
+  padding: 11px 14px;
+  color: #2ab5ff;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  outline: none;
+  cursor: pointer;
+  appearance: auto;
+  margin-bottom: 22px;
+}
+.modal-select:focus { border-color: var(--accent); }
+.modal-btns {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.btn-cancel {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 9px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+}
+.btn-cancel:hover { background: var(--surface2); }
+.btn-confirm {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 9px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+}
+.btn-confirm:hover  { background: #009bbf; }
+.btn-confirm:active { transform: scale(.96); }
+
+/* code input */
+.card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.card-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.code-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  overflow: hidden;
+}
+.code-row input {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 9px 12px;
+  color: var(--accent);
+  font-family: 'Courier New', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  outline: none;
+  transition: border-color .2s;
+}
+.code-row input:focus { border-color: var(--accent); }
+.code-row input::placeholder {
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 1px;
+  font-weight: 400;
+}
+.btn-add {
+  flex-shrink: 0;
+  background: #a7d297;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .2s, transform .1s;
+  white-space: nowrap;
+}
+.btn-add:hover  { background: #8fc280; }
+.btn-add:active { transform: scale(.96); }
+
+.code-msg {
+  margin-top: 7px;
+  font-size: 12px;
+  min-height: 15px;
+}
+.code-msg.success { color: var(--success); }
+.code-msg.error   { color: var(--danger); }
+.code-msg.warn    { color: var(--accent2); }
+
+/* accuracy */
+.acc-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.acc-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.acc-label  { font-size: 12px; color: var(--text-muted); }
+.acc-num    { font-size: 26px; font-weight: 900; color: #2ab5ff; font-variant-numeric: tabular-nums; }
+.acc-denom  { font-size: 16px; color: var(--text-muted); font-weight: 500; }
+.bar-track  { height: 6px; background: var(--locked-bg); border-radius: 3px; overflow: hidden; }
+.bar-fill   { height: 100%; background: linear-gradient(90deg, var(--accent), #0077a8); border-radius: 3px; transition: width .5s ease; width: 0%; }
+
+/* entered codes */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.chip {
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 2px;
+}
+.chip.hint { border-color: var(--accent2); color: var(--accent2); }
+.chips-empty { font-size: 12px; color: var(--text-muted); font-style: italic; }
+
+.codes-card {
+  flex: 1;
+  min-height: 80px;
+}
+
+/* ── RIGHT PANEL ────────────────────────────────────────── */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 22px;
+  gap: 18px;
+  overflow-y: auto;
+}
+
+/* round info bar */
+.round-bar {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.round-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 20px;
+  gap: 6px;
+}
+.round-item .rlabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.round-item .rval {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.round-item .rnum {
+  color: #2ab5ff;
+  font-size: 42px;
+  font-weight: 900;
+  font-family: 'Courier New', monospace;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.round-item .unit { font-size: 16px; color: var(--text-muted); font-weight: 500; }
+.round-sep { width: 1px; background: var(--border); align-self: stretch; }
+
+/* demand section */
+.demand-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.demand-header {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  padding: 13px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.demand-title { font-size: 15px; font-weight: 700; }
+.demand-unit  {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg);
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+/* year grid */
+.year-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.ycell {
+  background: var(--locked-bg);
+  padding: 14px 8px;
+  text-align: center;
+  transition: background .3s;
+}
+.ycell.open { background: var(--surface); }
+
+.ycell .ylabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  letter-spacing: .5px;
+}
+.ycell .yval {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--locked-col);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.3px;
+  line-height: 1.2;
+}
+.ycell.open .yval { color: var(--accent); }
+.ycell .ytemp {
+  font-size: 11px;
+  margin-top: 4px;
+  color: var(--locked-col);
+}
+.ycell.open .ytemp { color: var(--accent2); }
+.lock-ico { font-size: 20px; color: var(--locked-col); }
+
+/* prediction input area */
+.predict-area {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.predict-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.predict-input {
+  flex: 1;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: var(--text);
+  font-size: 30px;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  transition: border-color .2s;
+  text-align: center;
+}
+.predict-input:focus { border-color: var(--accent); }
+.predict-input::placeholder { color: var(--locked-col); font-size: 15px; font-weight: 400; font-family: 'Noto Sans KR', sans-serif; }
+.predict-input[readonly] { cursor: default; color: var(--accent); border-color: var(--border); }
+.predict-input::-webkit-inner-spin-button,
+.predict-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.predict-input[type=number] { -moz-appearance: textfield; }
+.predict-unit-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.predict-btns {
+  display: flex;
+  gap: 10px;
+}
+.btn-predict {
+  flex: 1;
+  background: #a7d297;
+  color: #2d5a1b;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .2s, transform .1s;
+  text-align: center;
+}
+.btn-predict:hover  { background: #72ad62; }
+.btn-predict:active { transform: scale(.97); }
+.btn-next {
+  flex: 1;
+  background: #ffb3c1;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .2s, transform .1s;
+  text-align: center;
+}
+.btn-next:hover  { background: #fd7d96; }
+.btn-next:active { transform: scale(.97); }
+.btn-predict:disabled,
+.btn-next:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* research results label */
+.research-label {
+  padding: 12px 20px 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* chart area */
+.chart-wrap {
+  position: relative;
+  padding: 12px 18px 18px;
+  flex: 1;
+  min-height: 240px;
+}
+.chart-empty {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  pointer-events: none;
+  line-height: 1.8;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.93);
+  padding: 16px 28px;
+  border-radius: 16px;
+  white-space: nowrap;
+}
+
+/* hints */
+.hints-card {
+  background: var(--surface);
+  border: 1px solid #4a3000;
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+.hints-title { font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 10px; }
+.hint-item {
+  background: rgba(247,127,0,.07);
+  border-left: 3px solid var(--accent2);
+  border-radius: 0 6px 6px 0;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.hint-item:last-child { margin-bottom: 0; }
+
+/* error modal */
+.error-modal-icon {
+  font-size: 36px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+.error-modal-title {
+  font-size: 18px;
+  font-weight: 900;
+  text-align: center;
+  color: var(--danger);
+  margin-bottom: 8px;
+}
+.error-modal-msg {
+  font-size: 13px;
+  text-align: center;
+  color: var(--text-muted);
+  margin-bottom: 22px;
+  line-height: 1.6;
+}
+.btn-retry {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+}
+.btn-retry:hover  { background: #009bbf; }
+.btn-retry:active { transform: scale(.97); }
+
+/* toast */
+.toast {
+  position: fixed;
+  bottom: 22px; right: 22px;
+  background: var(--surface2);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  transform: translateY(16px);
+  opacity: 0;
+  transition: all .3s;
+  z-index: 200;
+  max-width: 300px;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.err  { border-color: var(--danger); }
+
+/* year selector */
+.year-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.btn-year {
+  background: var(--bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+  font-family: 'Courier New', monospace;
+  letter-spacing: .3px;
+}
+.btn-year:hover { border-color: var(--accent); color: var(--text); }
+.btn-year.active { background: #fff; color: #000; border-color: #fff; }
+
+
+@media (max-width: 820px) {
+  .app { grid-template-columns: 1fr; }
+  .left-panel { border-right: none; border-bottom: 1px solid var(--border); }
+  .year-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══════════════ LEFT ══════════════ -->
+  <div class="left-panel">
+
+    <div class="game-title">
+      <div class="badge">Board Game · 탐정 미션</div>
+      <h1>명탐정그린<br><em>AI 공급 미션을 수행하라</em></h1>
+    </div>
+
+    <!-- game setting -->
+    <div class="setting-section">
+      <div class="setting-heading">게임 세팅</div>
+      <button class="btn-new-game" onclick="openModal()">새로운 게임 시작하기</button>
+    </div>
+
+    <!-- code input -->
+    <div class="card">
+      <div class="card-label">연구카드 코드 입력</div>
+      <div class="code-row">
+        <input id="codeInput" type="text" placeholder="코드를 입력하세요" maxlength="6"
+               autocomplete="off" spellcheck="false">
+        <button class="btn-add" onclick="addCode()">추가</button>
+      </div>
+      <div class="code-msg" id="codeMsg"></div>
+    </div>
+
+    <!-- accuracy -->
+    <div class="card">
+      <div class="acc-title">AI 예측 적중률</div>
+      <div class="acc-row">
+        <span class="acc-label">유효 표본</span>
+        <span class="acc-num" id="sampleNum">0</span>
+        <span class="acc-denom">/15</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" id="barFill"></div></div>
+    </div>
+
+    <!-- entered codes -->
+    <div class="card codes-card">
+      <div class="card-label">입력된 코드</div>
+      <div class="chips" id="chipsList">
+        <span class="chips-empty" id="chipsEmpty">아직 입력된 코드가 없습니다.</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════ RIGHT ══════════════ -->
+  <div class="right-panel">
+
+    <!-- round / month bar -->
+    <div class="round-bar">
+      <div class="round-item">
+        <span class="rlabel">현재 라운드</span>
+        <div class="rval">
+          <span class="rnum" id="roundDisp">1</span>
+          <span class="unit">라운드</span>
+        </div>
+      </div>
+      <div class="round-sep"></div>
+      <div class="round-item">
+        <span class="rlabel">현재 월</span>
+        <div class="rval">
+          <span class="rnum" id="monthDisp">—</span>
+          <span class="unit">월</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- demand card -->
+    <div class="demand-card">
+      <div class="demand-header">
+        <span class="demand-title">예상 지역 가스 수요량</span>
+        <span class="demand-unit">단위: 억m³</span>
+      </div>
+
+      <!-- prediction input + buttons -->
+      <div class="predict-area">
+        <div class="predict-input-wrap">
+          <input class="predict-input" id="predictInput" type="text" placeholder="지역 가스 공급량 예측 버튼을 눌러주세요" readonly>
+          <span class="predict-unit-label">억㎥</span>
+        </div>
+        <div class="predict-btns">
+          <button class="btn-predict" id="btnPredict" onclick="submitPredict()" disabled>지역 가스 공급량 예측</button>
+          <button class="btn-next" id="btnNext" onclick="nextMonth()" disabled>다음 달로 넘어가기</button>
+        </div>
+        <div class="year-selector" id="yearSelector"></div>
+      </div>
+
+      <!-- research results + chart -->
+      <div class="research-label">연구 결과</div>
+      <div class="chart-wrap">
+        <canvas id="gasChart"></canvas>
+        <div class="chart-empty" id="chartEmpty">
+          연구카드 코드를 입력하면<br>해당 연도의 데이터가 표시됩니다.
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+</div>
+
+<!-- already entered modal -->
+<div class="modal-overlay" id="alreadyEnteredOverlay" style="display:none;">
+  <div class="modal-box">
+    <div class="error-modal-icon">⚠️</div>
+    <div class="error-modal-title" style="color:var(--danger);">중복 코드</div>
+    <div class="error-modal-msg">이미 입력된 코드입니다.</div>
+    <button class="btn-retry" onclick="document.getElementById('alreadyEnteredOverlay').style.display='none'">확인</button>
+  </div>
+</div>
+
+<!-- game not started modal -->
+<div class="modal-overlay" id="notStartedOverlay" style="display:none;">
+  <div class="modal-box">
+    <div class="error-modal-icon">🎮</div>
+    <div class="error-modal-title" style="color:var(--accent);">게임을 시작해주세요</div>
+    <div class="error-modal-msg">새로운 게임을 시작해주세요.</div>
+    <button class="btn-retry" onclick="document.getElementById('notStartedOverlay').style.display='none'">확인</button>
+  </div>
+</div>
+
+<!-- round end modal -->
+<div class="modal-overlay" id="roundEndOverlay" style="display:none;">
+  <div class="modal-box">
+    <div class="error-modal-icon">🎮</div>
+    <div class="error-modal-title" style="color:var(--accent2);">라운드가 끝났습니다</div>
+    <div class="error-modal-msg">새로운 게임을 시작하세요.</div>
+    <button class="btn-retry" onclick="closeRoundEndModal()">확인</button>
+  </div>
+</div>
+
+<!-- error modal -->
+<div class="modal-overlay" id="errorOverlay">
+  <div class="modal-box">
+    <div class="error-modal-icon">⚠️</div>
+    <div class="error-modal-title">코드 오류</div>
+    <div class="error-modal-msg">코드를 다시 입력하세요.</div>
+    <button class="btn-retry" onclick="closeErrorModal()">다시 입력하기</button>
+  </div>
+</div>
+
+<!-- game start modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="onOverlayClick(event)">
+  <div class="modal-box">
+    <div class="modal-title">새 게임 시작</div>
+    <div class="modal-label">시작 월</div>
+    <select class="modal-select" id="modalMonthSel">
+      <option value="1">1월</option>
+      <option value="2">2월</option>
+      <option value="3">3월</option>
+      <option value="4">4월</option>
+      <option value="5">5월</option>
+      <option value="6">6월</option>
+      <option value="7">7월</option>
+      <option value="8">8월</option>
+      <option value="9">9월</option>
+      <option value="10">10월</option>
+      <option value="11">11월</option>
+      <option value="12">12월</option>
+    </select>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">취소</button>
+      <button class="btn-confirm" onclick="confirmGame()">확인</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════════════════════════
+const GAS = {
+  2016: [2645618,2191413,1849750,1218500, 978755, 871966, 875081, 801635, 805093,1080685,1736334,2321103],
+  2017: [2574692,2274560,1957993,1307249, 993076, 885183, 863888, 838359, 899797,1068932,1910205,2804337],
+  2018: [3027689,2538408,1941477,1391643,1140831, 990602, 986552, 928513, 945836,1362129,1830830,2719677],
+  2019: [2090097,1704781,1725929,1645257,1470227,1335314,1750082,1784006,1424434,1507941,1823047,2364989],
+  2020: [2505392,2236541,1870006,1448897, 976252, 849076, 884905, 854493, 903537,1215787,1758309,2730888],
+  2021: [3070656,2282910,1884253,1354413,1146485, 971082, 952040, 897211, 914189,1267766,1852992,2701590],
+  2022: [2984980,2600104,2055137,1414808,1125569,1014322,1012864, 922585, 903088,1226552,1594940,2974362],
+  2023: [2849049,2183538,1703591,1270463,1058013, 908600, 918626, 878449, 887683,1121286,1865011,2664110],
+  2024: [2803483,2216172,2020986,1247463,1117754, 965801, 964150, 915602, 855056,1076310,1583346,2611085],
+  2025: [2794096,2665549,1975460,1382978,1126962, 938799, 933132, 890125, 910326,1070676,1718557,2565632],
+};
+
+const TEMP = {
+  2016: [-3.2, 0.2, 7.0,14.1,19.6,23.6,26.2,28.0,23.1,16.1, 6.8, 1.2],
+  2017: [-1.8,-0.2, 6.3,13.9,19.5,23.3,26.9,25.9,22.1,16.4, 5.6,-1.9],
+  2018: [-4.0,-1.6, 8.1,13.0,18.2,23.1,27.8,28.8,21.5,13.1, 7.8,-0.6],
+  2019: [-0.9, 1.0, 7.1,12.1,19.4,22.5,25.9,27.2,22.6,16.4, 7.6, 1.4],
+  2020: [ 1.6, 2.5, 7.7,11.1,18.0,23.9,24.1,26.5,21.4,14.3, 8.0,-0.3],
+  2021: [-2.4, 2.7, 9.0,14.2,17.1,22.8,28.1,25.9,22.6,15.6, 8.2, 0.6],
+  2022: [-2.2,-1.1, 7.7,14.8,19.1,23.3,27.3,25.7,22.4,14.6,10.0,-2.8],
+  2023: [-1.5, 2.3, 9.8,13.8,19.5,23.4,26.7,27.2,23.7,15.8, 6.8, 1.1],
+  2024: [-0.5, 3.8, 7.0,16.3,18.5,24.6,26.6,29.3,25.5,16.7, 9.7, 0.8],
+  2025: [-0.4,-1.2, 8.0,13.4,17.8,24.0,28.8,28.2,23.5,16.5, 9.0, 1.2],
+};
+
+const YEARS = [2016,2017,2018,2019,2020,2021,2022,2023,2024,2025];
+const MONTH_LABELS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+
+// 15 codes: 10 year-unlock + 5 hint
+const CODES = {
+  'A83': { type:'year', year:2016, label:'2016년 공급 데이터 해제' },
+  'B17': { type:'year', year:2017, label:'2017년 공급 데이터 해제' },
+  'C42': { type:'year', year:2018, label:'2018년 공급 데이터 해제' },
+  'D81': { type:'year', year:2019, label:'2019년 공급 데이터 해제' },
+  'E63': { type:'year', year:2020, label:'2020년 공급 데이터 해제' },
+  'F74': { type:'year', year:2021, label:'2021년 공급 데이터 해제' },
+  'G97': { type:'year', year:2022, label:'2022년 공급 데이터 해제' },
+  'H54': { type:'year', year:2023, label:'2023년 공급 데이터 해제' },
+  'J19': { type:'year', year:2024, label:'2024년 공급 데이터 해제' },
+  'K66': { type:'year', year:2025, label:'2025년 공급 데이터 해제' },
+  'L49': { type:'hint', hint:'기온이 낮을수록 가스 수요량이 증가하는 경향이 있습니다.' },
+  'M38': { type:'hint', hint:'난방 수요가 집중되는 11월~2월에 공급량이 최대치를 보입니다.' },
+  'N25': { type:'hint', hint:'여름철(7~8월) 냉방 수요는 전기 중심으로, 도시가스 수요는 상대적으로 낮습니다.' },
+  'P51': { type:'hint', hint:'서울 월 평균기온과 가스 공급량은 뚜렷한 역상관 관계를 보입니다.' },
+  'Q35': { type:'hint', hint:'최근 10년 연평균 도시가스 공급량은 약 15억~18억 천㎥ 수준입니다.' },
+};
+
+const YEAR_COLORS = [
+  '#00b4d8','#f77f00','#2ecc71','#e74c3c','#9b59b6',
+  '#1abc9c','#f39c12','#e67e22','#3498db','#fd79a8'
+];
+
+// 엑셀 "카드별 데이터" 기준 — 코드별 월별 공급량(억㎥) + 기온(℃)
+const CODE_DATA = {
+  'A83': [{year:2024,month:2,temp:3.8,supply:22.16},{year:2024,month:3,temp:7.0,supply:20.21},{year:2024,month:5,temp:18.5,supply:11.18},{year:2024,month:7,temp:26.6,supply:9.64},{year:2024,month:8,temp:29.3,supply:9.16},{year:2024,month:9,temp:25.5,supply:8.55},{year:2024,month:10,temp:16.7,supply:10.76},{year:2024,month:11,temp:9.7,supply:15.83}],
+  'B17': [{year:2016,month:3,temp:7.0,supply:18.50},{year:2016,month:4,temp:14.1,supply:12.18},{year:2016,month:6,temp:23.6,supply:8.72},{year:2016,month:7,temp:26.2,supply:8.75},{year:2016,month:8,temp:28.0,supply:8.02},{year:2016,month:9,temp:23.1,supply:8.05},{year:2016,month:10,temp:16.1,supply:10.81},{year:2016,month:12,temp:1.2,supply:23.21}],
+  'C42': [{year:2021,month:3,temp:9.0,supply:18.84},{year:2021,month:5,temp:17.1,supply:11.46},{year:2021,month:6,temp:22.8,supply:9.71},{year:2021,month:7,temp:28.1,supply:9.52},{year:2021,month:8,temp:25.9,supply:8.97},{year:2021,month:9,temp:22.6,supply:9.14},{year:2021,month:10,temp:15.6,supply:12.68},{year:2021,month:11,temp:8.2,supply:18.53}],
+  'D81': [{year:2016,month:1,temp:-3.2,supply:26.46},{year:2016,month:2,temp:0.2,supply:21.91},{year:2016,month:5,temp:19.6,supply:9.79},{year:2016,month:11,temp:6.8,supply:17.36},{year:2019,month:2,temp:1.0,supply:17.05},{year:2019,month:4,temp:12.1,supply:16.45},{year:2019,month:6,temp:22.5,supply:13.35},{year:2019,month:10,temp:16.4,supply:15.08}],
+  'E63': [{year:2023,month:1,temp:-1.5,supply:28.49},{year:2023,month:2,temp:2.3,supply:21.84},{year:2023,month:5,temp:19.5,supply:10.58},{year:2023,month:6,temp:23.4,supply:9.09},{year:2023,month:7,temp:26.7,supply:9.19},{year:2023,month:10,temp:15.8,supply:11.21},{year:2023,month:11,temp:6.8,supply:18.65},{year:2023,month:12,temp:1.1,supply:26.64}],
+  'F74': [{year:2020,month:1,temp:1.6,supply:25.05},{year:2020,month:3,temp:7.7,supply:18.70},{year:2020,month:4,temp:11.1,supply:14.49},{year:2020,month:5,temp:18.0,supply:9.76},{year:2020,month:6,temp:23.9,supply:8.49},{year:2020,month:8,temp:26.5,supply:8.54},{year:2020,month:10,temp:14.3,supply:12.16},{year:2020,month:12,temp:-0.3,supply:27.31}],
+  'G97': [{year:2019,month:1,temp:-0.9,supply:20.90},{year:2019,month:3,temp:7.1,supply:17.26},{year:2019,month:5,temp:19.4,supply:14.70},{year:2019,month:7,temp:25.9,supply:17.50},{year:2019,month:8,temp:27.2,supply:17.84},{year:2019,month:9,temp:22.6,supply:14.24},{year:2019,month:11,temp:7.6,supply:18.23},{year:2019,month:12,temp:1.4,supply:23.65}],
+  'H54': [{year:2025,month:1,temp:-0.4,supply:27.94},{year:2025,month:2,temp:-1.2,supply:26.66},{year:2025,month:4,temp:13.4,supply:13.83},{year:2025,month:5,temp:17.8,supply:11.27},{year:2025,month:6,temp:24.0,supply:9.39},{year:2025,month:9,temp:23.5,supply:9.10},{year:2025,month:10,temp:16.5,supply:10.71},{year:2025,month:12,temp:1.2,supply:25.66}],
+  'J19': [{year:2022,month:3,temp:7.7,supply:20.55},{year:2022,month:6,temp:23.3,supply:10.14},{year:2022,month:11,temp:10.0,supply:15.95},{year:2022,month:12,temp:-2.8,supply:29.74},{year:2025,month:3,temp:8.0,supply:19.75},{year:2025,month:7,temp:28.8,supply:9.33},{year:2025,month:8,temp:28.2,supply:8.90},{year:2025,month:11,temp:9.0,supply:17.19}],
+  'K66': [{year:2022,month:1,temp:-2.2,supply:29.85},{year:2022,month:2,temp:-1.1,supply:26.00},{year:2022,month:4,temp:14.8,supply:14.15},{year:2022,month:5,temp:19.1,supply:11.26},{year:2022,month:7,temp:27.3,supply:10.13},{year:2022,month:8,temp:25.7,supply:9.23},{year:2022,month:9,temp:22.4,supply:9.03},{year:2022,month:10,temp:14.6,supply:12.27}],
+  'L49': [{year:2020,month:2,temp:2.5,supply:22.37},{year:2020,month:7,temp:24.1,supply:8.85},{year:2020,month:9,temp:21.4,supply:9.04},{year:2020,month:11,temp:8.0,supply:17.58},{year:2024,month:1,temp:-0.5,supply:28.03},{year:2024,month:4,temp:16.3,supply:12.47},{year:2024,month:6,temp:24.6,supply:9.66},{year:2024,month:12,temp:0.8,supply:26.11}],
+  'M38': [{year:2023,month:3,temp:9.8,supply:17.04},{year:2023,month:4,temp:13.8,supply:12.70},{year:2023,month:8,temp:27.2,supply:8.78},{year:2023,month:9,temp:23.7,supply:8.88},{year:2018,month:4,temp:13.0,supply:13.92},{year:2018,month:5,temp:18.2,supply:11.41},{year:2018,month:8,temp:28.8,supply:9.29},{year:2018,month:10,temp:13.1,supply:13.62}],
+  'N25': [{year:2018,month:1,temp:-4.0,supply:30.28},{year:2018,month:2,temp:-1.6,supply:25.38},{year:2018,month:3,temp:8.1,supply:19.41},{year:2018,month:6,temp:23.1,supply:9.91},{year:2018,month:7,temp:27.8,supply:9.87},{year:2018,month:9,temp:21.5,supply:9.46},{year:2018,month:11,temp:7.8,supply:18.31},{year:2018,month:12,temp:-0.6,supply:27.20}],
+  'P51': [{year:2017,month:3,temp:6.3,supply:19.58},{year:2017,month:5,temp:19.5,supply:9.93},{year:2017,month:6,temp:23.3,supply:8.85},{year:2017,month:7,temp:26.9,supply:8.64},{year:2017,month:8,temp:25.9,supply:8.38},{year:2017,month:9,temp:22.1,supply:9.00},{year:2017,month:10,temp:16.4,supply:10.69},{year:2017,month:11,temp:5.6,supply:19.10}],
+  'Q35': [{year:2017,month:1,temp:-1.8,supply:25.75},{year:2017,month:2,temp:-0.2,supply:22.75},{year:2017,month:4,temp:13.9,supply:13.07},{year:2017,month:12,temp:-1.9,supply:28.04},{year:2021,month:1,temp:-2.4,supply:30.71},{year:2021,month:2,temp:2.7,supply:22.83},{year:2021,month:4,temp:14.2,supply:13.54},{year:2021,month:12,temp:0.6,supply:27.02}],
+};
+
+// ════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════
+let entered      = new Set();
+let unlocked     = new Set();
+let hints        = [];
+let curMonth     = 1;
+let chart        = null;
+let selectedYear = null;
+
+// ════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  updateDisplay();
+  buildGrid();
+  initChart();
+  buildYearButtons();
+  document.getElementById('codeInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addCode();
+  });
+});
+
+// ════════════════════════════════════════════════════════════
+// GRID
+// ════════════════════════════════════════════════════════════
+function buildGrid() {
+  const grid = document.getElementById('yearGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const mi = curMonth - 1;
+
+  YEARS.forEach(yr => {
+    const open = unlocked.has(yr);
+    const cell = document.createElement('div');
+    cell.className = 'ycell' + (open ? ' open' : '');
+    cell.id = 'yc' + yr;
+
+    if (open) {
+      const gas  = GAS[yr][mi].toLocaleString();
+      const temp = TEMP[yr][mi];
+      cell.innerHTML =
+        `<div class="ylabel">${yr}년</div>
+         <div class="yval">${gas}</div>
+         <div class="ytemp">🌡 ${temp}℃</div>`;
+    } else {
+      cell.innerHTML =
+        `<div class="ylabel">${yr}년</div>
+         <div class="lock-ico">🔒</div>`;
+    }
+    grid.appendChild(cell);
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// YEAR BUTTONS
+// ════════════════════════════════════════════════════════════
+function buildYearButtons() {
+  const container = document.getElementById('yearSelector');
+  container.innerHTML = '';
+  YEARS.forEach(yr => {
+    const btn = document.createElement('button');
+    btn.className = 'btn-year' + (selectedYear === yr ? ' active' : '');
+    btn.textContent = yr + '년';
+    btn.id = 'btnYear' + yr;
+    btn.onclick = () => selectYear(yr);
+    container.appendChild(btn);
+  });
+}
+
+function selectYear(yr) {
+  selectedYear = (selectedYear === yr) ? null : yr;
+  YEARS.forEach(y => {
+    const btn = document.getElementById('btnYear' + y);
+    if (btn) btn.classList.toggle('active', selectedYear === y);
+  });
+  refreshChart();
+}
+
+// ════════════════════════════════════════════════════════════
+// CHART
+// ════════════════════════════════════════════════════════════
+function initChart() {
+  const ctx = document.getElementById('gasChart').getContext('2d');
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: MONTH_LABELS, datasets: [] },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          labels: { color: '#7a9bb5', font: { size: 11 }, boxWidth: 14 }
+        },
+        tooltip: {
+          backgroundColor: '#1a2c3e',
+          borderColor: '#2e4a62',
+          borderWidth: 1,
+          titleColor: '#e8f4f8',
+          bodyColor: '#b0cfe0',
+          callbacks: {
+            label: ctx => {
+              if (ctx.dataset.yAxisID === 'y1') {
+                return ` 기온: ${ctx.raw !== null ? ctx.raw + ' ℃' : '—'}`;
+              }
+              return ` 공급량: ${ctx.raw !== null ? ctx.raw + ' 억㎥' : '—'}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: '#1e3248' },
+          ticks: { color: '#7a9bb5', font: { size: 11 } }
+        },
+        y: {
+          position: 'left',
+          min: 0,
+          max: 30,
+          grid: { color: '#1e3248' },
+          ticks: { color: '#00b4d8', font: { size: 11 }, callback: v => v + ' 억' },
+          title: { display: true, text: '공급량 (억㎥)', color: '#00b4d8', font: { size: 10 } }
+        },
+        y1: {
+          position: 'right',
+          grid: { drawOnChartArea: false },
+          ticks: { color: '#f77f00', font: { size: 11 }, callback: v => v + '℃' },
+          title: { display: true, text: '기온 (℃)', color: '#f77f00', font: { size: 10 } }
+        }
+      }
+    }
+  });
+}
+
+function refreshChart() {
+  const empty = document.getElementById('chartEmpty');
+
+  if (!selectedYear || entered.size === 0) {
+    chart.data.datasets = [];
+    chart.update();
+    empty.style.display = 'block';
+    empty.innerHTML = entered.size === 0
+      ? '연구카드 코드를 입력하면<br>해당 연도의 데이터가 표시됩니다.'
+      : '연도 버튼을 선택하면<br>해당 연도의 데이터가 표시됩니다.';
+    return;
+  }
+
+  // 선택된 연도의 데이터를 입력된 코드에서 수집
+  const supplyArr = new Array(12).fill(null);
+  const tempArr   = new Array(12).fill(null);
+
+  entered.forEach(code => {
+    const pts = CODE_DATA[code];
+    if (!pts) return;
+    pts.forEach(pt => {
+      if (pt.year === selectedYear) {
+        supplyArr[pt.month - 1] = pt.supply;
+        tempArr[pt.month - 1]   = pt.temp;
+      }
+    });
+  });
+
+  const hasData = supplyArr.some(v => v !== null);
+  if (!hasData) {
+    chart.data.datasets = [];
+    chart.update();
+    empty.style.display = 'block';
+    empty.innerHTML = selectedYear + '년 데이터를 가진<br>코드를 입력해주세요.';
+    return;
+  }
+
+  empty.style.display = 'none';
+  chart.data.datasets = [
+    {
+      type: 'bar',
+      label: selectedYear + '년 공급량',
+      data: supplyArr,
+      backgroundColor: '#00b4d855',
+      borderColor: '#00b4d8',
+      borderWidth: 1.5,
+      borderRadius: 3,
+      yAxisID: 'y',
+    },
+    {
+      type: 'line',
+      label: selectedYear + '년 기온',
+      data: tempArr,
+      spanGaps: true,
+      borderColor: '#f77f00',
+      backgroundColor: '#f77f0022',
+      borderWidth: 2,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      pointBackgroundColor: '#f77f00',
+      tension: 0.3,
+      yAxisID: 'y1',
+    }
+  ];
+  chart.update();
+}
+
+// ════════════════════════════════════════════════════════════
+// CODE ENTRY
+// ════════════════════════════════════════════════════════════
+function addCode() {
+  const inp = document.getElementById('codeInput');
+  const raw = inp.value.trim().toUpperCase();
+  const msgEl = document.getElementById('codeMsg');
+
+  if (!raw) return;
+
+  if (!gameStarted) {
+    document.getElementById('notStartedOverlay').style.display = 'flex';
+    return;
+  }
+
+  if (entered.has(raw)) {
+    setMsg(msgEl, '이미 입력된 코드입니다.', 'warn');
+    document.getElementById('alreadyEnteredOverlay').style.display = 'flex';
+    inp.select();
+    return;
+  }
+
+  const data = CODES[raw];
+  if (!data) {
+    inp.value = '';
+    msgEl.textContent = '';
+    showErrorModal();
+    return;
+  }
+
+  entered.add(raw);
+  inp.value = '';
+  msgEl.textContent = '';
+  addChip(raw, data.type === 'hint');
+
+  if (data.type === 'year') {
+    unlocked.add(data.year);
+    buildGrid();
+    refreshChart();
+    showToast('✅ ' + raw + ' 데이터 해제', false);
+  } else {
+    showToast(raw + ' 데이터 해제', false);
+  }
+
+  updateSample();
+}
+
+function addChip(code, isHint) {
+  document.getElementById('chipsEmpty').style.display = 'none';
+  const chip = document.createElement('span');
+  chip.className = 'chip';
+  chip.textContent = code;
+  document.getElementById('chipsList').appendChild(chip);
+}
+
+function updateSample() {
+  const n = entered.size;
+  document.getElementById('sampleNum').textContent = n;
+  document.getElementById('barFill').style.width = (n / 15 * 100) + '%';
+}
+
+function refreshHints() {
+  const card = document.getElementById('hintsCard');
+  const list = document.getElementById('hintsList');
+  if (!hints.length) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  list.innerHTML = hints.map(h => `<div class="hint-item">${h}</div>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+// ROUND / MONTH DISPLAY
+// ════════════════════════════════════════════════════════════
+let curRound = 1;
+let gameStarted = false;
+
+function updateDisplay() {
+  document.getElementById('roundDisp').textContent = curRound;
+  document.getElementById('monthDisp').textContent = gameStarted ? curMonth : '—';
+}
+
+// ════════════════════════════════════════════════════════════
+// NEXT MONTH BUTTON
+// ════════════════════════════════════════════════════════════
+function nextMonth() {
+  if (curRound >= 4) {
+    document.getElementById('roundEndOverlay').style.display = 'flex';
+    return;
+  }
+  curRound += 1;
+  curMonth = curMonth < 12 ? curMonth + 1 : 1;
+  document.getElementById('roundDisp').textContent = curRound;
+  document.getElementById('monthDisp').textContent = curMonth;
+  document.getElementById('predictInput').value = '';
+  buildGrid();
+  showToast('📅 ' + curMonth + '월로 넘어갑니다. (라운드 ' + curRound + ')', false);
+}
+function closeRoundEndModal() {
+  document.getElementById('roundEndOverlay').style.display = 'none';
+}
+
+// ════════════════════════════════════════════════════════════
+// PREDICTION RANGES (단위: 억㎥) — 엑셀 "월별 예측범위 요약" 기준
+// index 0 = 1장 입력, index 14 = 15장 입력
+// ════════════════════════════════════════════════════════════
+const RANGES = {
+  1:  ['21.98~30.00','23.29~29.89','24.28~29.71','25.02~29.27','25.59~29.10','25.99~28.67','26.34~28.35','26.59~28.11','26.77~27.92','26.91~27.78','27.02~27.67','27.10~27.59','27.16~27.53','27.20~27.49','27.24~27.45'],
+  2:  ['15.79~30.00','18.03~27.79','19.52~26.27','20.57~25.22','21.29~24.49','21.79~24.00','22.13~23.65','22.37~23.42','22.53~23.25','22.65~23.14','22.72~23.07','22.78~23.01','22.81~22.98','22.84~22.95','22.86~22.93'],
+  3:  ['7.97~30.00','11.76~26.21','14.25~23.72','15.88~22.09','16.95~21.02','17.65~20.32','18.11~19.86','18.41~19.56','18.61~19.36','18.74~19.23','18.82~19.15','18.88~19.09','18.91~19.05','18.94~19.03','18.95~19.01'],
+  4:  ['7.00~20.38','9.13~18.24','10.59~16.78','11.58~15.78','12.25~15.11','12.71~14.65','13.02~13.99','13.23~13.99','13.38~13.99','13.47~13.89','13.54~13.82','13.59~13.78','13.62~13.75','13.64~13.73','13.65~13.71'],
+  5:  ['7.00~15.29','7.97~14.29','8.73~13.54','9.30~12.96','9.74~12.53','9.99~12.19','10.33~11.94','10.52~11.75','10.67~11.60','10.78~11.49','10.86~11.40','10.93~11.34','10.98~11.29','11.01~11.25','11.04~11.22'],
+  6:  ['7.00~14.02','7.00~12.74','7.62~11.84','8.25~11.21','8.69~10.77','9.17~10.46','9.22~10.28','9.37~10.12','9.48~9.99','9.52~9.91','9.61~9.85','9.64~9.82','9.67~9.79','9.69~9.77','9.70~9.76'],
+  7:  ['7.00~14.02','7.40~12.88','8.20~12.08','8.77~11.51','9.17~11.11','9.46~10.82','10.01~10.62','10.01~10.48','10.03~10.38','10.05~10.31','10.06~10.26','10.10~10.23','10.11~10.20','10.10~10.18','10.11~10.17'],
+  8:  ['7.00~14.02','7.00~12.73','7.59~11.83','8.22~11.20','8.67~10.75','8.98~10.44','9.20~9.99','9.35~9.99','9.46~9.96','9.53~9.89','9.59~9.83','9.62~9.80','9.65~9.77','9.67~9.75','9.68~9.74'],
+  9:  ['7.00~14.02','7.00~12.64','7.22~11.68','7.89~11.01','8.36~10.54','8.69~10.21','8.92~9.98','9.08~9.82','9.19~9.71','9.27~9.63','9.32~9.58','9.36~9.54','9.39~9.51','9.41~9.49','9.42~9.48'],
+  10: ['7.00~17.02','8.08~15.92','8.93~15.06','9.60~14.44','9.99~13.87','9.99~13.46','10.85~13.14','11.10~12.89','11.30~12.70','11.45~12.55','11.57~12.43','11.66~12.33','11.74~12.26','11.79~12.20','11.84~12.16'],
+  11: ['7.00~28.35','10.66~24.69','13.06~22.29','14.64~20.70','15.68~19.67','16.36~18.98','16.81~17.99','17.11~17.99','17.30~17.99','17.43~17.92','17.51~17.83','17.57~17.78','17.60~17.74','17.63~17.72','17.64~17.70'],
+  12: ['21.98~30.00','23.33~29.59','24.27~28.65','24.93~27.99','25.39~27.53','25.71~27.21','26.01~26.98','26.09~26.82','26.20~26.71','26.28~26.64','26.33~26.58','26.37~26.55','26.40~26.52','26.41~26.50','26.43~26.49'],
+};
+
+// ════════════════════════════════════════════════════════════
+// PREDICT BUTTON
+// ════════════════════════════════════════════════════════════
+function submitPredict() {
+  if (!gameStarted) {
+    showToast('먼저 게임을 시작해주세요.', true);
+    return;
+  }
+  const count = Math.min(entered.size, 15);
+  if (count === 0) {
+    showToast('연구카드 코드를 1장 이상 입력해주세요.', true);
+    return;
+  }
+  const range = RANGES[curMonth][count - 1];
+  const inp = document.getElementById('predictInput');
+  inp.value = range;
+}
+
+// ════════════════════════════════════════════════════════════
+// ERROR MODAL
+// ════════════════════════════════════════════════════════════
+function showErrorModal() {
+  document.getElementById('errorOverlay').style.display = 'flex';
+}
+function closeErrorModal() {
+  document.getElementById('errorOverlay').style.display = 'none';
+  document.getElementById('codeInput').focus();
+}
+
+// ════════════════════════════════════════════════════════════
+// MODAL
+// ════════════════════════════════════════════════════════════
+function openModal() {
+  document.getElementById('modalMonthSel').value = curMonth;
+  document.getElementById('modalOverlay').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').style.display = 'none';
+}
+
+function onOverlayClick(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function confirmGame() {
+  const m = parseInt(document.getElementById('modalMonthSel').value);
+
+  // 상태 초기화
+  entered  = new Set();
+  unlocked = new Set();
+  hints    = [];
+  curMonth = m;
+  curRound = 1;
+  gameStarted = true;
+
+  // 코드 입력 UI 초기화
+  document.getElementById('chipsList').innerHTML =
+    '<span class="chips-empty" id="chipsEmpty">아직 입력된 코드가 없습니다.</span>';
+  document.getElementById('codeInput').value = '';
+  document.getElementById('codeMsg').textContent = '';
+  updateSample();
+
+  // 예측 입력 초기화
+  document.getElementById('predictInput').value = '';
+
+  // 연도 선택 초기화
+  selectedYear = null;
+  buildYearButtons();
+
+  // 라운드/월 표시 갱신
+  document.getElementById('roundDisp').textContent = curRound;
+  document.getElementById('monthDisp').textContent = m;
+
+  // 버튼 활성화
+  document.getElementById('btnPredict').disabled = false;
+  document.getElementById('btnNext').disabled = false;
+
+  // 그리드 & 차트 초기화
+  buildGrid();
+  refreshChart();
+
+  closeModal();
+  showToast('🎮 ' + m + '월로 게임이 시작되었습니다!', false);
+}
+
+// ════════════════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════════════════
+function setMsg(el, text, type) {
+  el.textContent = text;
+  el.className = 'code-msg ' + type;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.textContent = ''; el.className = 'code-msg'; }, 3000);
+}
+
+let _toastT;
+function showToast(msg, isErr) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr ? ' err' : '');
+  clearTimeout(_toastT);
+  _toastT = setTimeout(() => { t.className = 'toast'; }, 3200);
+}
+</script>
+</body>
+</html>
